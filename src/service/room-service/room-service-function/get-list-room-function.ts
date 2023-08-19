@@ -1,5 +1,11 @@
+import {
+  CommonListResult,
+  CommonResponse,
+  generateServiceToken,
+} from 'common-abstract-fares-system'
+
 import { RoomRepository } from '@/src/repository/room-repository/room-repository'
-import { CommonListResult, CommonResponse } from 'common-abstract-fares-system'
+import axios from 'axios'
 import mongoose from 'mongoose'
 import { NextApiRequest } from 'next'
 import { PrivateRoomRes } from '../room-private-res'
@@ -30,6 +36,38 @@ export const getListRoomsFunc = async (
       result: '',
     }
   }
+
+  const responseList = await Promise.all(
+    result.result.data.map(async (item) => {
+      const internalToken = generateServiceToken({ serviceName: process.env.SERVICE_NAME || '' })
+      const internalImage = await axios.get(
+        `${
+          process.env.IMAGE_SERVICE_URL
+        }/api/images/get-list?belongIds=${item._id.toString()}&ServiceToken=${internalToken}`
+      )
+      if (internalImage.status === 200 && internalImage.data.success) {
+        const result = internalImage.data.result as CommonListResult<any>
+        if (result.data.length > 0) {
+          return {
+            ...item,
+            _id: item._id.toString(),
+            productId: item.productId.toString(),
+            thumbnail: result.data[0].link,
+            catalog: result.data.filter((item, index) => index > 0).map((item) => item.link),
+          }
+        }
+      }
+
+      return {
+        ...item,
+        _id: item._id.toString(),
+        productId: item.productId.toString(),
+        thumbnail: '',
+        catalog: [],
+      }
+    })
+  )
+
   if (isAuth) {
     return {
       status: 200,
@@ -37,14 +75,7 @@ export const getListRoomsFunc = async (
       success: true,
       result: {
         ...result.result,
-        data: result.result.data.map((item) => {
-          return {
-            ...item,
-            _id: item._id.toString(),
-            productId: item.productId.toString(),
-            active: item.active,
-          }
-        }),
+        data: responseList,
       },
     }
   }
@@ -54,11 +85,9 @@ export const getListRoomsFunc = async (
     success: true,
     result: {
       ...result.result,
-      data: result.result.data.map((item) => {
+      data: responseList.map((item) => {
         return {
           ...item,
-          _id: item._id.toString(),
-          productId: item.productId.toString(),
           active: undefined,
         }
       }),
