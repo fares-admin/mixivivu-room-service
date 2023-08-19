@@ -14,4 +14,8 @@ export class PublicRoomRes {
   features: string[] = []
 
   productId: string = ''
+
+  thumbnail: string = ''
+
+  catalog: string[] = []
 }
