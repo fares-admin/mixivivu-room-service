@@ -53,7 +53,7 @@ export const getListRoomsFunc = async (
             _id: item._id.toString(),
             productId: item.productId.toString(),
             thumbnail: result.data[0].link,
-            catalog: result.data.filter((item, index) => index > 0).map((item) => item.link),
+            catalog: result.data.map((item) => item.link),
           }
         }
       }
