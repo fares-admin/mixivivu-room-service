@@ -1,8 +1,9 @@
+import { CommonResponse, validate } from 'common-abstract-fares-system'
+import { RoomReq, RoomReqError, RoomValidatorSchema } from '../room-req'
+
 import { Room } from '@/src/repository/room-repository/room-entity'
 import { RoomRepository } from '@/src/repository/room-repository/room-repository'
-import { CommonResponse, validate } from 'common-abstract-fares-system'
 import mongoose from 'mongoose'
-import { RoomReq, RoomReqError, RoomValidatorSchema } from '../room-req'
 
 export const addNewRoomFunction = async (
   req: RoomReq,
@@ -32,10 +33,11 @@ export const addNewRoomFunction = async (
       success: false,
     }
   }
+  const { result } = await repository.findOne('title', req.title)
   return {
     status: 200,
     message: 'ok',
-    result: '',
+    result: result?._id.toString() || '',
     success: true,
   }
 }
